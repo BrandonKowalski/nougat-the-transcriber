@@ -1,0 +1,11 @@
+services:
+  nougat:
+    build: .
+    container_name: nougat-transcriber
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./transcripts:/app/transcripts
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}

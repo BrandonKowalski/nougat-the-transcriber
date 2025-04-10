@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "nougat-the-transcriber"
+version = "0.1.0"
+description = "FastAPI app for uploading and transcribing audio using OpenAI and audio chunking."
+authors = ["Brandon Kowalski <brandon@kowalski.io>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.110.0"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
+pydub = "^0.25.1"
+openai = "^1.14.0"
+python-dotenv = "^1.0.1"
+pydantic = "^2.6.4"
+python-multipart = "^0.0.20"
+jinja2 = "^3.1.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

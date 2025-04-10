@@ -1,0 +1,174 @@
+<html lang="en">
+<head>
+    <title>Nougat the Transcriber</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            overflow: hidden;
+        }
+
+        img {
+            height: 350px;
+            width: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 5px;
+            color: #333;
+        }
+
+        h2 {
+            margin: 10px;
+            font-weight: normal;
+            color: #666;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label.upload-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .spinner {
+            display: none;
+            margin-left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .success-message {
+            margin-top: 20px;
+            color: green;
+            font-size: 1.2rem;
+        }
+
+        .progress-message {
+            margin-top: 10px;
+            color: #333;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+<img src="static/nougat.png" alt="Nougat the Transcriber"/>
+<h1>Nougat the Transcriber</h1>
+<h2>Upload an audio file to be transcribed.</h2>
+<small>Supports .mp3, .m4a and .wav files.</small>
+<form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" id="file" name="file" required>
+    <label for="file" class="upload-button" id="uploadLabel">
+        <span id="uploadText">Upload Recording</span>
+        <span class="spinner" id="spinner"></span>
+    </label>
+</form>
+<div class="success-message" id="successMessage" style="display: none;"></div>
+<div class="progress-message" id="progressMessage"
+     style="display: none; font-size: 1rem; color: #333; margin-top: 10px;"></div>
+<script>
+    const fileInput = document.getElementById('file');
+    const spinner = document.getElementById('spinner');
+    const label = document.getElementById('uploadLabel');
+    const text = document.getElementById('uploadText');
+    const successMessage = document.getElementById('successMessage');
+    let dirty = false;
+    const progressMessage = document.getElementById('progressMessage');
+
+    window.addEventListener('beforeunload', (e) => {
+        if (dirty) {
+            e.preventDefault();
+        }
+    });
+
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        dirty = true;
+        text.textContent = 'Processing...';
+        spinner.style.display = 'inline-block';
+        label.style.opacity = '0.7';
+        label.style.pointerEvents = 'none';
+        progressMessage.style.display = 'block';
+        progressMessage.textContent = 'Uploading and transcribing your file...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+
+            console.log(response);
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const filename = response.headers.get('X-Transcript-Filename') || 'transcript.txt';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            text.textContent = 'Upload Recording';
+            successMessage.textContent = 'Transcribing Successful! Your transcript will download automatically.';
+            successMessage.style.display = 'block';
+            progressMessage.style.display = 'none';
+        } catch (err) {
+            text.textContent = 'Error. Try Again';
+            progressMessage.textContent = 'Something went wrong during upload.';
+        } finally {
+            dirty = false;
+            spinner.style.display = 'none';
+            label.style.opacity = '1';
+            label.style.pointerEvents = 'auto';
+        }
+    });
+</script>
+</body>
+</html>
